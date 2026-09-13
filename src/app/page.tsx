@@ -3,11 +3,12 @@
 import React, { useState, useEffect } from "react";
 import Header from "@/components/Header";
 import InputStudio from "@/components/InputStudio";
-import LoadingSkeleton from "@/components/LoadingSkeleton";
 import RevisionPack from "@/components/RevisionPack";
 import ActiveRecallQuiz from "@/components/ActiveRecallQuiz";
+import LoadingSkeleton from "@/components/LoadingSkeleton";
 import ApiKeyModal from "@/components/ApiKeyModal";
 import SpaceBackground from "@/components/SpaceBackground";
+import ErrorBoundary from "@/components/ErrorBoundary";
 import { StudyStudioData, SubjectMode, DifficultyLevel } from "@/types";
 import { Columns, BookOpen, HelpCircle, ArrowLeft, Sparkles, Clock } from "lucide-react";
 
@@ -102,9 +103,9 @@ export default function Home() {
         setBannerMessage(json.message);
       }
       window.scrollTo({ top: 0, behavior: "smooth" });
-    } catch (err: any) {
-      console.error(err);
-      setBannerMessage(err.message || "An error occurred while generating study materials.");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "An error occurred while generating study materials.";
+      setBannerMessage(message);
     } finally {
       setIsLoading(false);
     }
@@ -144,7 +145,8 @@ export default function Home() {
         hasKey={Boolean(apiKey)}
       />
 
-      <div className="flex-1 w-full max-w-6xl mx-auto px-4 py-6 sm:px-6 md:px-8 md:py-12 space-y-6 sm:space-y-8 relative z-10">
+      <ErrorBoundary onReset={handleReset}>
+        <div className="flex-1 w-full max-w-6xl mx-auto px-4 py-6 sm:px-6 md:px-8 md:py-12 space-y-6 sm:space-y-8 relative z-10">
         {bannerMessage && (
           <div className="p-4 rounded-2xl bg-indigo-950/60 border border-indigo-500/30 text-indigo-200 text-xs flex items-center justify-between shadow-lg backdrop-blur-md">
             <span>{bannerMessage}</span>
@@ -283,6 +285,7 @@ export default function Home() {
           </div>
         )}
       </div>
+    </ErrorBoundary>
 
       {/* API Key Modal */}
       <ApiKeyModal

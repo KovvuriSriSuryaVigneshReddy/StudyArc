@@ -45,7 +45,9 @@ export const Header: React.FC<HeaderProps> = ({
                   STUDIO
                 </span>
               </div>
-              <p className="hidden text-xs text-slate-400 sm:block font-sans">AI Student Revision Studio</p>
+              <p className="hidden text-xs text-slate-400 sm:block font-sans">
+                AI Student Revision Studio • Developed by SriSuryaVigneshReddy
+              </p>
             </div>
           </div>
         </div>

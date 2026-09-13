@@ -11,6 +11,15 @@ export interface ParsedFileResult {
 
 /**
  * Extracts plain text from a TXT or Markdown file.
+ *
+ * @param file - The uploaded plain text or markdown File object.
+ * @returns A promise resolving to a ParsedFileResult with cleaned text content.
+ * @throws {Error} If reading the file stream fails.
+ * @example
+ * ```ts
+ * const result = await parseTextFile(textFile);
+ * console.log(result.text);
+ * ```
  */
 export async function parseTextFile(file: File): Promise<ParsedFileResult> {
   const text = await file.text();
@@ -23,7 +32,16 @@ export async function parseTextFile(file: File): Promise<ParsedFileResult> {
 }
 
 /**
- * Extracts text from a PPTX file by reading slide XML streams inside the ZIP archive.
+ * Extracts text from a PPTX presentation by unzipping and reading slide XML streams.
+ *
+ * @param file - The uploaded Microsoft PowerPoint (.pptx) File object.
+ * @returns A promise resolving to a ParsedFileResult containing slide text and slide count.
+ * @throws {Error} If the ZIP archive is corrupt or contains no readable text slides.
+ * @example
+ * ```ts
+ * const result = await parsePptxFile(presentationFile);
+ * console.log(`Parsed ${result.slideCount} slides`);
+ * ```
  */
 export async function parsePptxFile(file: File): Promise<ParsedFileResult> {
   try {
@@ -79,7 +97,16 @@ export async function parsePptxFile(file: File): Promise<ParsedFileResult> {
 }
 
 /**
- * Extracts text from PDF files using client-side stream scanning.
+ * Extracts text from PDF files using client-side binary stream scanning.
+ *
+ * @param file - The uploaded Adobe PDF File object.
+ * @returns A promise resolving to a ParsedFileResult with extracted text.
+ * @throws {Error} If parsing fails or the PDF contains purely scanned/unextractable imagery.
+ * @example
+ * ```ts
+ * const result = await parsePdfFile(pdfFile);
+ * console.log(result.text.slice(0, 100));
+ * ```
  */
 export async function parsePdfFile(file: File): Promise<ParsedFileResult> {
   try {
@@ -151,7 +178,16 @@ export async function parsePdfFile(file: File): Promise<ParsedFileResult> {
 }
 
 /**
- * Universal dispatcher based on file extension.
+ * Universal file ingestion dispatcher that delegates to the appropriate extractor
+ * based on the file extension (.txt, .md, .pptx, .pdf).
+ *
+ * @param file - The uploaded File object.
+ * @returns A promise resolving to the unified ParsedFileResult.
+ * @throws {Error} If extraction fails for the targeted format.
+ * @example
+ * ```ts
+ * const parsed = await parseUploadedFile(userFile);
+ * ```
  */
 export async function parseUploadedFile(file: File): Promise<ParsedFileResult> {
   const extension = file.name.split(".").pop()?.toLowerCase();

@@ -634,4 +634,4 @@ export const ActiveRecallQuiz: React.FC<ActiveRecallQuizProps> = ({
   );
 };
 
-export default ActiveRecallQuiz;
+export default React.memo(ActiveRecallQuiz);

@@ -126,8 +126,22 @@ export const SpaceBackground: React.FC = () => {
       });
     }
 
-    // Animation Loop
-    const render = () => {
+    // Animation Loop with FPS throttling and tab visibility pausing
+    let lastFrameTime = performance.now();
+    const TARGET_FPS = 50;
+    const FRAME_INTERVAL = 1000 / TARGET_FPS;
+    let isPaused = false;
+
+    const render = (now: number) => {
+      animationFrameId = requestAnimationFrame(render);
+
+      if (isPaused) return;
+
+      const elapsed = now - lastFrameTime;
+      if (elapsed < FRAME_INTERVAL) return;
+
+      lastFrameTime = now - (elapsed % FRAME_INTERVAL);
+
       // Smooth cursor parallax interpolation
       mouseX += (targetMouseX - mouseX) * 0.04;
       mouseY += (targetMouseY - mouseY) * 0.04;
@@ -223,14 +237,21 @@ export const SpaceBackground: React.FC = () => {
           ctx.fill();
         }
       }
-
-      animationFrameId = requestAnimationFrame(render);
     };
 
-    render();
+    const handleVisibilityChange = () => {
+      isPaused = document.hidden;
+      if (!isPaused) {
+        lastFrameTime = performance.now();
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    animationFrameId = requestAnimationFrame(render);
 
     return () => {
       cancelAnimationFrame(animationFrameId);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("resize", handleResize);
     };
@@ -252,4 +273,4 @@ export const SpaceBackground: React.FC = () => {
   );
 };
 
-export default SpaceBackground;
+export default React.memo(SpaceBackground);

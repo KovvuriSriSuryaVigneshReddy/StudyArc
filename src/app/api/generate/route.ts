@@ -1,9 +1,29 @@
 import { NextRequest, NextResponse } from "next/server";
 import { checkRateLimit } from "@/lib/rateLimit";
+import {
+  GeminiApiResponse,
+  GeminiGeneratedPayload,
+  GeminiQuizQuestion,
+  GeminiExamTrap,
+  StudyStudioData,
+} from "@/types";
 
+/** Maximum permitted lecture text character payload (25,000 characters) */
 const MAX_CONTENT_LENGTH = 25000;
 
-export async function POST(req: NextRequest) {
+/**
+ * Handles lecture note analysis and revision studio generation via Google Gemini.
+ * Enforces:
+ * - 5 requests/min sliding window rate limit per client IP.
+ * - Max 25,000 character payload length.
+ * - Secure header-based API key transmission (`x-goog-api-key`).
+ * - Multi-model fallback across `gemini-3.6-flash`, `gemini-3.5-flash-lite`, and `gemini-flash-latest`.
+ * - Strict JSON schema output normalization.
+ *
+ * @param req - NextRequest containing JSON body `{ content, subjectMode, difficulty, apiKey }`
+ * @returns NextResponse containing normalized `StudyStudioData` or error payload.
+ */
+export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
     // 1. IP-based Rate Limiting (5 requests per minute)
     const forwardedFor = req.headers.get("x-forwarded-for");
@@ -23,7 +43,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const body = await req.json();
+    const body = (await req.json()) as {
+      content?: string;
+      subjectMode?: string;
+      difficulty?: string;
+      apiKey?: string;
+    };
     const { content, subjectMode, difficulty, apiKey: clientApiKey } = body;
 
     const apiKey = clientApiKey || process.env.GEMINI_API_KEY;
@@ -135,8 +160,9 @@ CRITICAL REQUIREMENT: Return strictly valid raw JSON without any markdown code f
           lastErrorDetails = `Model ${model} returned status ${res.status}: ${errText}`;
           console.error("Gemini API upstream error:", lastErrorDetails);
         }
-      } catch (err: any) {
-        lastErrorDetails = `Network error calling ${model}: ${err?.message || String(err)}`;
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : String(err);
+        lastErrorDetails = `Network error calling ${model}: ${message}`;
         console.error("Gemini API network exception:", lastErrorDetails);
       }
     }
@@ -150,7 +176,7 @@ CRITICAL REQUIREMENT: Return strictly valid raw JSON without any markdown code f
       );
     }
 
-    const result = await response.json();
+    const result = (await response.json()) as GeminiApiResponse;
     const rawText = result.candidates?.[0]?.content?.parts?.[0]?.text;
 
     if (!rawText) {
@@ -163,9 +189,9 @@ CRITICAL REQUIREMENT: Return strictly valid raw JSON without any markdown code f
 
     // Clean potential markdown delimiters if present
     const cleaned = rawText.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
-    let parsed: any;
+    let parsed: GeminiGeneratedPayload;
     try {
-      parsed = JSON.parse(cleaned);
+      parsed = JSON.parse(cleaned) as GeminiGeneratedPayload;
     } catch (parseErr) {
       console.error("JSON parse error on model output:", parseErr, cleaned);
       return NextResponse.json(
@@ -174,7 +200,7 @@ CRITICAL REQUIREMENT: Return strictly valid raw JSON without any markdown code f
       );
     }
 
-    const questions = (parsed.practiceQuiz || parsed.practice_quiz || []).map((q: any, idx: number) => ({
+    const questions = (parsed.practiceQuiz || parsed.practice_quiz || []).map((q: GeminiQuizQuestion, idx: number) => ({
       id: q.id ?? idx + 1,
       question: q.question || "",
       options: q.options || [],
@@ -185,7 +211,7 @@ CRITICAL REQUIREMENT: Return strictly valid raw JSON without any markdown code f
 
     const rawTraps = parsed.trapsAndGotchas || parsed.traps_and_gotchas || [];
     const traps = Array.isArray(rawTraps) && rawTraps.length > 0
-      ? rawTraps.map((t: any) => ({
+      ? rawTraps.map((t: GeminiExamTrap) => ({
           concept: t.concept || "High-Yield Exam Trap",
           commonTrap: t.commonTrap || t.common_trap || "Common distractor or tricky sign error.",
           common_trap: t.commonTrap || t.common_trap || "Common distractor or tricky sign error.",
@@ -216,7 +242,7 @@ CRITICAL REQUIREMENT: Return strictly valid raw JSON without any markdown code f
           },
         ];
 
-    const normalized = {
+    const normalized: StudyStudioData = {
       ...parsed,
       topic: parsed.topic || "Lecture Revision",
       read_time_minutes: parsed.read_time_minutes ?? parsed.readTimeMinutes ?? 5,
@@ -234,7 +260,7 @@ CRITICAL REQUIREMENT: Return strictly valid raw JSON without any markdown code f
     };
 
     return NextResponse.json(normalized);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Internal handler error in /api/generate:", error);
     return NextResponse.json(
       { error: "Failed to generate study materials. Please try again." },

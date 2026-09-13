@@ -1,22 +1,27 @@
 /**
  * In-Memory IP-Based Rate Limiter Utility
- * Limits requests to 5 per minute per IP address.
+ * Limits requests to 5 requests per minute per IP address.
  */
 
-interface RateLimitRecord {
+export interface RateLimitRecord {
+  /** Total requests recorded within current window */
   count: number;
+  /** Unix timestamp in ms when the window expires */
   resetTime: number;
 }
 
-const WINDOW_MS = 60 * 1000; // 1 minute window
-const MAX_REQUESTS = 5;
+/** Rate limit time window in milliseconds (1 minute) */
+export const WINDOW_MS = 60 * 1000;
+
+/** Maximum requests permitted per IP address within the window */
+export const MAX_REQUESTS = 5;
 
 // Global in-memory storage for IP rate tracking
 const rateLimitMap = new Map<string, RateLimitRecord>();
 
-// Cleanup expired entries every 2 minutes to prevent memory leaks
+// Cleanup expired entries periodically to prevent memory leaks
 if (typeof setInterval !== "undefined") {
-  setInterval(() => {
+  const cleanupTimer = setInterval(() => {
     const now = Date.now();
     for (const [ip, record] of rateLimitMap.entries()) {
       if (now > record.resetTime) {
@@ -24,14 +29,35 @@ if (typeof setInterval !== "undefined") {
       }
     }
   }, 2 * 60 * 1000);
+  // Prevent cleanup timer from keeping Node process alive in tests
+  if (cleanupTimer && typeof cleanupTimer === "object" && "unref" in cleanupTimer) {
+    (cleanupTimer as { unref: () => void }).unref();
+  }
 }
 
 export interface RateLimitResult {
+  /** Whether the request is permitted */
   allowed: boolean;
+  /** Number of remaining allowed requests within current window */
   remaining: number;
+  /** Unix timestamp in ms when rate limit count resets */
   resetTime: number;
 }
 
+/**
+ * Checks and increments the rate limit counter for a given client IP address.
+ * Employs a fixed/sliding-window tracking algorithm in memory.
+ *
+ * @param ip - The client's IP address (from headers or connection).
+ * @returns An object containing `allowed`, `remaining`, and `resetTime`.
+ * @example
+ * ```ts
+ * const limit = checkRateLimit(clientIp);
+ * if (!limit.allowed) {
+ *   return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+ * }
+ * ```
+ */
 export function checkRateLimit(ip: string): RateLimitResult {
   const now = Date.now();
   const safeIp = ip.trim() || "127.0.0.1";
@@ -67,3 +93,4 @@ export function checkRateLimit(ip: string): RateLimitResult {
     resetTime: record.resetTime,
   };
 }
+

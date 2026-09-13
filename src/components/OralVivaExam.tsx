@@ -17,13 +17,22 @@ import {
   Lightbulb,
   Send,
 } from "lucide-react";
-import { QuizQuestion, ExamTrap } from "@/types";
+import {
+  QuizQuestion,
+  ExamTrap,
+  ISpeechRecognition,
+  SpeechRecognitionEvent,
+  SpeechRecognitionErrorEvent,
+} from "@/types";
 import MathRenderer from "./MathRenderer";
 
-interface OralVivaExamProps {
-  questions?: QuizQuestion[];
-  traps?: ExamTrap[];
-  topic?: string;
+interface VivaScenario {
+  id: number;
+  question: string;
+  scenario: string;
+  explanation: string;
+  correctOption: string;
+  trapHint: string;
 }
 
 interface VivaFeedback {
@@ -33,21 +42,40 @@ interface VivaFeedback {
   benchmarkAnswer: string;
 }
 
+interface OralVivaExamProps {
+  questions: QuizQuestion[];
+  traps?: ExamTrap[];
+  topic?: string;
+  onBackToQuiz?: () => void;
+}
+
+type SpeechRecognitionConstructor = new () => ISpeechRecognition;
+
+function getSpeechRecognition(): SpeechRecognitionConstructor | null {
+  if (typeof window === "undefined") return null;
+  const win = window as unknown as {
+    SpeechRecognition?: SpeechRecognitionConstructor;
+    webkitSpeechRecognition?: SpeechRecognitionConstructor;
+  };
+  return win.SpeechRecognition || win.webkitSpeechRecognition || null;
+}
+
 export const OralVivaExam: React.FC<OralVivaExamProps> = ({
   questions = [],
   traps = [],
-  topic = "Exam Material",
+  topic = "Revision Subject",
+  onBackToQuiz,
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const [isRecording, setIsRecording] = useState(false);
   const [transcript, setTranscript] = useState("");
+  const [isRecording, setIsRecording] = useState(false);
   const [recordingSeconds, setRecordingSeconds] = useState(0);
   const [feedback, setFeedback] = useState<Record<number, VivaFeedback>>({});
   const [isEvaluating, setIsEvaluating] = useState(false);
   const [speechSupported, setSpeechSupported] = useState(true);
 
-  const recognitionRef = useRef<any>(null);
+  const recognitionRef = useRef<ISpeechRecognition | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Derive Viva Scenario Questions from the questions and traps
@@ -76,8 +104,7 @@ export const OralVivaExam: React.FC<OralVivaExamProps> = ({
 
   // Check speech recognition support
   useEffect(() => {
-    const SpeechRecognition =
-      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const SpeechRecognition = getSpeechRecognition();
     if (!SpeechRecognition) {
       setSpeechSupported(false);
     }
@@ -130,8 +157,7 @@ export const OralVivaExam: React.FC<OralVivaExamProps> = ({
 
   // Record Answer via SpeechRecognition / webkitSpeechRecognition
   const handleToggleRecord = () => {
-    const SpeechRecognition =
-      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const SpeechRecognition = getSpeechRecognition();
 
     if (!SpeechRecognition) {
       alert("Web Speech API is not supported in this browser. You can type your response directly into the text box.");
@@ -164,7 +190,7 @@ export const OralVivaExam: React.FC<OralVivaExamProps> = ({
         }, 1000);
       };
 
-      recognition.onresult = (event: any) => {
+      recognition.onresult = (event: SpeechRecognitionEvent) => {
         let currentTranscript = "";
         for (let i = 0; i < event.results.length; i++) {
           currentTranscript += event.results[i][0].transcript + " ";
@@ -172,7 +198,7 @@ export const OralVivaExam: React.FC<OralVivaExamProps> = ({
         setTranscript(currentTranscript.trim());
       };
 
-      recognition.onerror = (event: any) => {
+      recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
         console.warn("Speech recognition notice:", event.error);
         setIsRecording(false);
         if (timerRef.current) {

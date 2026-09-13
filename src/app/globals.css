@@ -1,0 +1,458 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 228 50% 5%;
+  --foreground: 210 40% 98%;
+}
+
+html {
+  scroll-behavior: smooth;
+  background-color: #0a0f1d;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+::selection {
+  background: rgba(139, 92, 246, 0.4);
+  color: #ffffff;
+}
+
+body {
+  color: #f1f5f9;
+  background: radial-gradient(circle at 50% 12%, #1a0a2a 0%, #100b24 35%, #0a0f1d 100%);
+  background-color: #0a0f1d;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  min-height: 100vh;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+/* Global custom cursor suppression - strictly on desktop fine pointer devices with hover */
+@media (hover: hover) and (pointer: fine) {
+  *, *::before, *::after {
+    cursor: none !important;
+  }
+}
+
+/* Touch and mobile devices fallback: restore default touch behavior and hide custom portal elements */
+@media (hover: none), (pointer: coarse) {
+  *, *::before, *::after {
+    cursor: auto !important;
+    touch-action: manipulation;
+  }
+  .spatial-cursor-portal {
+    display: none !important;
+  }
+}
+
+/* Spatial cursor strict zero-transition and pointer-events protection */
+.spatial-cursor-portal,
+.spatial-cursor-dot,
+.spatial-cursor-ring {
+  transition: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  pointer-events: none !important;
+}
+
+/* ==========================================================================
+   PART A: Spatial Atmosphere, Bokeh Glow, & Deep-Space Constellation Overlay
+   ========================================================================== */
+
+/* Faint Deep-Space Constellation & Schematic Overlay */
+.constellation-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none !important;
+  background-image:
+    radial-gradient(1.5px 1.5px at 50px 70px, rgba(255, 255, 255, 0.25), transparent),
+    radial-gradient(1.5px 1.5px at 160px 220px, rgba(168, 85, 247, 0.35), transparent),
+    radial-gradient(2px 2px at 320px 150px, rgba(99, 102, 241, 0.35), transparent),
+    radial-gradient(1px 1px at 420px 380px, rgba(6, 182, 212, 0.3), transparent),
+    radial-gradient(2px 2px at 560px 240px, rgba(255, 255, 255, 0.28), transparent),
+    radial-gradient(1.5px 1.5px at 720px 110px, rgba(139, 92, 246, 0.3), transparent),
+    linear-gradient(to right, rgba(99, 102, 241, 0.02) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(168, 85, 247, 0.02) 1px, transparent 1px);
+  background-size: 600px 600px, 500px 500px, 700px 700px, 450px 450px, 650px 650px, 800px 800px, 60px 60px, 60px 60px;
+  opacity: 0.9;
+  z-index: 1;
+}
+
+/* Bokeh Glow Multi-layer Light Orbs */
+.bokeh-glow-container {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none !important;
+  z-index: 0;
+}
+
+.bokeh-orb-1 {
+  position: absolute;
+  top: 2%;
+  left: 12%;
+  width: 580px;
+  height: 580px;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.22) 0%, rgba(139, 92, 246, 0.05) 50%, transparent 70%);
+  filter: blur(85px);
+  animation: bokeh-drift-1 24s ease-in-out infinite alternate;
+}
+
+.bokeh-orb-2 {
+  position: absolute;
+  top: 35%;
+  right: 8%;
+  width: 620px;
+  height: 620px;
+  background: radial-gradient(circle, rgba(6, 182, 212, 0.18) 0%, rgba(6, 182, 212, 0.04) 50%, transparent 70%);
+  filter: blur(95px);
+  animation: bokeh-drift-2 28s ease-in-out infinite alternate;
+}
+
+.bokeh-orb-3 {
+  position: absolute;
+  bottom: 8%;
+  left: 25%;
+  width: 520px;
+  height: 520px;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.2) 0%, rgba(168, 85, 247, 0.05) 50%, transparent 70%);
+  filter: blur(90px);
+  animation: bokeh-drift-3 22s ease-in-out infinite alternate;
+}
+
+@keyframes bokeh-drift-1 {
+  0% {
+    transform: translate(0px, 0px) scale(1);
+  }
+
+  50% {
+    transform: translate(70px, 45px) scale(1.1);
+  }
+
+  100% {
+    transform: translate(-45px, 85px) scale(0.94);
+  }
+}
+
+@keyframes bokeh-drift-2 {
+  0% {
+    transform: translate(0px, 0px) scale(1);
+  }
+
+  50% {
+    transform: translate(-85px, -55px) scale(1.14);
+  }
+
+  100% {
+    transform: translate(35px, 65px) scale(0.92);
+  }
+}
+
+@keyframes bokeh-drift-3 {
+  0% {
+    transform: translate(0px, 0px) scale(1);
+  }
+
+  50% {
+    transform: translate(-55px, 65px) scale(1.08);
+  }
+
+  100% {
+    transform: translate(75px, -45px) scale(1.02);
+  }
+}
+
+/* ==========================================================================
+   PART B: Spatial Glassmorphic Cards & Tactile Buttons
+   ========================================================================== */
+
+/* Main Spatial Glass Pane */
+.spatial-glass-pane {
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 15px 35px -10px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 0 20px rgba(99, 102, 241, 0.03);
+  border-radius: 1.25rem;
+  transition: all 300ms ease-in-out;
+}
+
+/* Interactive Spatial Glass Card */
+.spatial-glass-card {
+  background: rgba(15, 23, 42, 0.58);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 20px 40px -15px rgba(0, 0, 0, 0.7),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  border-radius: 1.25rem;
+  transition: all 300ms ease-in-out;
+}
+
+.spatial-glass-card:hover {
+  border-color: rgba(139, 92, 246, 0.55);
+  box-shadow:
+    0 0 25px -4px rgba(139, 92, 246, 0.25),
+    0 25px 50px -12px rgba(0, 0, 0, 0.8),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  transform: translateY(-2px);
+}
+
+/* Linear Glass Nav */
+.linear-glass-nav {
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  background-color: rgba(10, 15, 29, 0.7);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 30px -10px rgba(0, 0, 0, 0.7), inset 0 -1px 0 rgba(139, 92, 246, 0.15);
+}
+
+/* Tactile Glowing Glass Button */
+.glass-btn-tactile {
+  position: relative;
+  background: linear-gradient(180deg, rgba(30, 58, 138, 0.4) 0%, rgba(15, 23, 42, 0.75) 100%);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(99, 102, 241, 0.35);
+  box-shadow:
+    0 4px 15px -3px rgba(0, 0, 0, 0.5),
+    inset 0 1px 1px rgba(255, 255, 255, 0.22),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.5);
+  transition: all 300ms ease-in-out;
+}
+
+.glass-btn-tactile:hover {
+  border-color: rgba(6, 182, 212, 0.6);
+  background: linear-gradient(180deg, rgba(30, 58, 138, 0.65) 0%, rgba(15, 23, 42, 0.85) 100%);
+  box-shadow:
+    0 0 20px -2px rgba(6, 182, 212, 0.4),
+    0 8px 25px -4px rgba(0, 0, 0, 0.6),
+    inset 0 1px 1px rgba(255, 255, 255, 0.4);
+  transform: translateY(-1px);
+}
+
+.glass-btn-tactile:active {
+  transform: translateY(1px) scale(0.98);
+  box-shadow:
+    0 2px 8px -2px rgba(0, 0, 0, 0.7),
+    inset 0 1px 2px rgba(0, 0, 0, 0.6);
+}
+
+/* Primary Hero Glowing Glass Button */
+.glass-btn-hero {
+  position: relative;
+  background: linear-gradient(135deg, #4f46e5 0%, #2563eb 50%, #06b6d4 100%);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  box-shadow:
+    0 8px 30px -4px rgba(99, 102, 241, 0.45),
+    inset 0 1px 1.5px rgba(255, 255, 255, 0.45);
+  transition: all 300ms ease-in-out;
+}
+
+.glass-btn-hero:hover {
+  box-shadow:
+    0 0 35px 2px rgba(6, 182, 212, 0.55),
+    0 12px 35px -4px rgba(99, 102, 241, 0.65),
+    inset 0 1px 1.5px rgba(255, 255, 255, 0.65);
+  filter: brightness(1.1);
+  transform: translateY(-2px);
+}
+
+.glass-btn-hero:active {
+  transform: translateY(0px) scale(0.98);
+}
+
+/* ==========================================================================
+   PART C: Dropzone Continuous Neon Shimmer & Ingestion Animations
+   ========================================================================== */
+
+@keyframes neon-shimmer-pulse {
+
+  0%,
+  100% {
+    border-color: rgba(99, 102, 241, 0.4);
+    box-shadow: 0 0 20px -3px rgba(99, 102, 241, 0.3), inset 0 0 15px rgba(99, 102, 241, 0.1);
+  }
+
+  50% {
+    border-color: rgba(6, 182, 212, 0.75);
+    box-shadow: 0 0 30px -2px rgba(6, 182, 212, 0.5), inset 0 0 25px rgba(6, 182, 212, 0.2);
+  }
+}
+
+.dropzone-neon-pulse {
+  animation: neon-shimmer-pulse 3.5s ease-in-out infinite;
+}
+
+@keyframes card-ingestion-flash {
+  0% {
+    transform: scale(0.97);
+    border-color: rgba(16, 185, 129, 0.95);
+    box-shadow: 0 0 45px 5px rgba(16, 185, 129, 0.6), inset 0 0 30px rgba(16, 185, 129, 0.35);
+    background-color: rgba(6, 78, 59, 0.45);
+  }
+
+  40% {
+    transform: scale(1.02);
+    border-color: rgba(6, 182, 212, 0.95);
+    box-shadow: 0 0 35px 3px rgba(6, 182, 212, 0.5), inset 0 0 20px rgba(6, 182, 212, 0.25);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+.card-ingestion-active {
+  animation: card-ingestion-flash 0.85s ease-out forwards;
+}
+
+/* ==========================================================================
+   PART D: 3D Flashcard Flipping Engine & Stacked Deck Layout
+   ========================================================================== */
+
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+.perspective-1200 {
+  perspective: 1200px;
+}
+
+.transform-style-preserve-3d {
+  transform-style: preserve-3d;
+}
+
+.backface-hidden {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.rotate-y-180 {
+  transform: rotateY(180deg);
+}
+
+/* Stacked Deck Fly-out Animations */
+@keyframes card-flyout-right {
+  0% {
+    transform: translate(0, 0) rotate(0deg);
+    opacity: 1;
+  }
+
+  100% {
+    transform: translate(130%, -20%) rotate(12deg);
+    opacity: 0;
+  }
+}
+
+@keyframes card-flyout-up {
+  0% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+
+  100% {
+    transform: translateY(-115%) scale(0.92);
+    opacity: 0;
+  }
+}
+
+.animate-card-flyout-right {
+  animation: card-flyout-right 450ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-card-flyout-up {
+  animation: card-flyout-up 450ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Custom Sleek Scrollbars */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0a0f1d;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1e293b;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #334155;
+}
+
+/* 3D Scroll Depth Motion & Interactive Card Tilt */
+.perspective-viewport {
+  perspective: 1200px;
+  perspective-origin: 50% 30%;
+}
+
+.scroll-depth-card {
+  transform-style: preserve-3d;
+  will-change: transform, opacity;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease;
+}
+
+.interactive-tilt-container {
+  perspective: 900px;
+  transform-style: preserve-3d;
+}
+
+.interactive-tilt-card {
+  transform-style: preserve-3d;
+  will-change: transform;
+  transition: transform 0.12s ease-out, box-shadow 0.2s ease-out;
+}
+
+.interactive-tilt-card.is-resetting {
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s ease;
+}
+
+/* Print Stylesheet for Study Guide */
+@media print {
+  html, body, main {
+    background: #ffffff !important;
+    color: #0f172a !important;
+  }
+
+  canvas,
+  .constellation-overlay,
+  .bokeh-glow-container,
+  .no-print,
+  nav,
+  header {
+    display: none !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+
+  .spatial-glass-card,
+  .spatial-glass-pane,
+  .linear-card,
+  .print-card {
+    border: 1px solid #cbd5e1 !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    break-inside: avoid;
+    box-shadow: none !important;
+  }
+
+  * {
+    color: #0f172a !important;
+    text-shadow: none !important;
+    box-shadow: none !important;
+  }
+}

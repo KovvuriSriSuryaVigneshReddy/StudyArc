@@ -1,0 +1,11 @@
+node_modules
+.env.local
+.env
+
+.env*
+node_modules
+.next
+
+.env*
+node_modules
+.next
